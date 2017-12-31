@@ -77,4 +77,5 @@ for trial in range(n_simulations):
 
 # Make figures
 summary_hist = plt.figure()
-plt.hist(sim_count)
+plt.hist(sim_count.flatten())
+plt.show()
