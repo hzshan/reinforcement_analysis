@@ -55,18 +55,18 @@ opening_data = load_data(first_row=2,
                last_column=chr(67 + n_days - 1),
                sheet=sheet)
 
-category_mask = np.repeat(categories, repeats=n_days, axis=1)
+cat_mask = np.repeat(categories, repeats=n_days, axis=1)
 rat_mask = np.repeat(rats, repeats=n_days, axis=1)
 
 # Calculate mean opening probability for each category
 cat_p = np.zeros(n_cat)  # set up storage vector
 for i in range(n_cat):
-    cat_p[i] = np.mean(opening_data[category_mask == i])
+    cat_p[i] = np.mean(opening_data[cat_mask == i])
 
 # Count consecutive openings
 cat_count = np.zeros_like(cat_p)
 for i in range(n_cat):
-    cat_count[i] = count_consecutive(opening_data[category_mask == i].reshape((n_rats, n_days)))
+    cat_count[i] = count_consecutive(opening_data[cat_mask == i].reshape((n_rats, n_days)))
 
 # Generate simulated data
 sim_count = np.zeros((n_cat, n_simulations))
@@ -77,5 +77,14 @@ for trial in range(n_simulations):
 
 # Make figures
 summary_hist = plt.figure()
-plt.hist(sim_count.flatten())
+color_dict = ['b', 'r', 'y', 'g', 'salmon']
+for i in range(n_cat):
+    label = 'Category ' + str(i)
+    plt.hist(sim_count[i, :], color=color_dict[i], bins=np.linspace(0, n_days * n_rats, n_days * n_rats), label=label)
+    plt.axvline(x=cat_count[i], label=label, color=color_dict[i])
+
+plt.xlabel('Consecutive openings')
+plt.ylabel('Count')
 plt.show()
+plt.grid()
+plt.legend()
