@@ -1,6 +1,6 @@
 from openpyxl import load_workbook
 import os.path
-from util import load_data, count_consecutive
+from util import load_data, count_consecutive, get_prob_table, simulate
 import numpy as np
 from numpy.random import binomial
 import matplotlib.pyplot as plt
@@ -19,11 +19,11 @@ by Haozhe Shan
 12/31/2017
 """
 
-n_cat = 2  # number of categories
-n_rats = 8  # total number of rats per category
+n_cat = 6  # number of categories
+n_rats = 16  # total number of rats per category
 n_days = 12
-n_simulations = 1000 # number of simulations to run
-filename = 'mock_data.xlsx'  # name of Excel spreadsheet
+n_simulations = 5000 # number of simulations to run
+filename = 'trapped_open.xlsx'  # name of Excel spreadsheet
 
 # See if the spreadsheet can be found
 if os.path.isfile(filename) is False:
@@ -68,16 +68,21 @@ cat_count = np.zeros_like(cat_p)
 for i in range(n_cat):
     cat_count[i] = count_consecutive(opening_data[cat_mask == i].reshape((n_rats, n_days)))
 
-# Generate simulated data
+# Calculate probability tables
+tables = np.zeros((n_rats, n_days, n_cat))
+for i in range(n_cat):
+    tables[:, :, i] = get_prob_table(opening_data[cat_mask == i].reshape((n_rats, n_days)))
+
+# Generated simulated data
 sim_count = np.zeros((n_cat, n_simulations))
 for trial in range(n_simulations):
     sim_data = np.zeros_like(opening_data)
     for i in range(n_cat):
-        sim_count[i, trial] = count_consecutive(binomial(n=1, p=cat_p[i], size=(n_rats, n_days)))
+        sim_count[i, trial] = count_consecutive(simulate(tables[:, :, i]))
 
 # Make figures
 summary_hist = plt.figure()
-color_dict = ['b', 'r', 'y', 'g', 'salmon']
+color_dict = ['b', 'r', 'y', 'g', 'salmon', 'c']
 for i in range(n_cat):
     label = 'Category ' + str(i)
     plt.hist(sim_count[i, :], color=color_dict[i], bins=np.linspace(0, n_days * n_rats, n_days * n_rats), label=label)
