@@ -18,12 +18,23 @@ Uses Python 3, openpyxl
 by Haozhe Shan
 12/31/2017
 """
+# ################################################
+# ################################################
+# ################################################
 
 n_cat = 6  # number of categories
 n_rats = 16  # total number of rats per category
-n_days = 12
-n_simulations = 5000 # number of simulations to run
+n_days = 12  # number of days
+n_simulations = 10000 # number of simulations to run
 filename = 'trapped_open.xlsx'  # name of Excel spreadsheet
+
+''' Put in names of the conditions in order. Surround each condition with quotation marks and separate with commas'''
+
+conditions = ['saline', 'uninjected', 'highMDZ', 'LowMDZ', 'anesthesia', 'SedMDZ']
+
+# ################################################
+# ################################################
+# ################################################
 
 # See if the spreadsheet can be found
 if os.path.isfile(filename) is False:
@@ -80,16 +91,25 @@ for trial in range(n_simulations):
     for i in range(n_cat):
         sim_count[i, trial] = count_consecutive(simulate(tables[:, :, i]))
 
+    p_values = np.zeros(n_cat)
+    for i in range(n_cat):
+        p_values[i] = sim_count[i, :][sim_count[i, :] > cat_count[i]].size / n_simulations
+
 # Make figures
 summary_hist = plt.figure()
-color_dict = ['b', 'r', 'y', 'g', 'salmon', 'c']
 for i in range(n_cat):
-    label = 'Category ' + str(i)
-    plt.hist(sim_count[i, :], color=color_dict[i], bins=np.linspace(0, n_days * n_rats, n_days * n_rats), label=label)
-    plt.axvline(x=cat_count[i], label=label, color=color_dict[i])
+    subplot_str = str(n_cat) + '1' + str(i+1)
+    summary_hist.add_subplot(subplot_str)
+    plt.hist(sim_count[i, :],
+             bins=np.linspace(0, n_days * n_rats, n_days * n_rats))
+    plt.axvline(x=cat_count[i])
+    plt.title(conditions[i] + ' one-tail p-value: ' + str(p_values[i]), fontsize=10)
+    if i == n_cat - 1:
+        plt.xlabel('Consecutive openings')
+        plt.ylabel('Count')
+    else:
+        plt.xticks(fontsize=4)
+    plt.grid()
 
-plt.xlabel('Consecutive openings')
-plt.ylabel('Count')
-plt.show()
-plt.grid()
-plt.legend()
+
+print(p_values)
